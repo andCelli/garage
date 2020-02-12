@@ -171,3 +171,12 @@ def test_wrap_experiment_launcher_outside_git():
         launcher_path = pathlib.Path(launcher_dir) / 'run_exp.py'
         snapshot_dir = _run_launcher(launcher_path, prefix)
         assert os.path.samefile(str(expected_path), str(snapshot_dir))
+
+
+def test_wrap_experiment_raises_on_non_ctxt_param_name():
+    prefix = 'wrap_exp_test_prefix2'
+    with pytest.raises(ValueError, match='named ctxt'):
+
+        @wrap_experiment(prefix=prefix)
+        def _test_exp(_snapshot_config=None):
+            pass
