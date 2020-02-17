@@ -263,6 +263,20 @@ class GaussianGRUPolicy(StochasticPolicy):
         return self.model.networks['default'].dist
 
     @property
+    def prev_hiddens(self):
+        """Previous hidden state.
+
+        This is a hot fix for meta-RL testing. Previous hidden state
+        needs to be set during testing. In the future, hidden state
+        will be passed as an argument in policy.get_actions().
+
+        Returns:
+            nd.ndarray: Previous hidden state.
+
+        """
+        return self._prev_hiddens
+
+    @property
     def state_info_specs(self):
         """list: State info specification."""
         if self._state_include_action:
@@ -273,12 +287,22 @@ class GaussianGRUPolicy(StochasticPolicy):
         return []
 
     def __getstate__(self):
-        """See `Object.__getstate__`."""
+        """See `Object.__getstate__`.
+
+        Returns:
+            dict: Parameters to save.
+
+        """
         new_dict = super().__getstate__()
         del new_dict['_f_step_mean_std']
         return new_dict
 
     def __setstate__(self, state):
-        """See `Object.__setstate__`."""
+        """See `Object.__setstate__`.
+
+        Args:
+            state (dict): Parameters to restore from.
+
+        """
         super().__setstate__(state)
         self._initialize()
