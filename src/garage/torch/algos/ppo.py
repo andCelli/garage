@@ -40,6 +40,8 @@ class PPO(VPG):
             dense entropy to the reward for each time step. 'regularized' adds
             the mean entropy to the surrogate objective. See
             https://arxiv.org/abs/1805.00909 for more details.
+        minibatch_size (int): Batch size for optimization.
+        max_optimization_epochs (int): Maximum number of epochs for update.
 
     """
 
@@ -49,17 +51,19 @@ class PPO(VPG):
                  baseline,
                  optimizer=torch.optim.Adam,
                  policy_lr=_Default(3e-4),
-                 max_path_length=500,
-                 lr_clip_range=2e-1,
-                 num_train_per_epoch=1,
-                 discount=0.99,
-                 gae_lambda=0.97,
-                 center_adv=True,
-                 positive_adv=False,
-                 policy_ent_coeff=0.0,
-                 use_softplus_entropy=False,
-                 stop_entropy_gradient=False,
-                 entropy_method='no_entropy'):
+                 max_path_length=_Default(500),
+                 lr_clip_range=_Default(2e-1),
+                 num_train_per_epoch=_Default(1),
+                 discount=_Default(0.99),
+                 gae_lambda=_Default(0.97),
+                 center_adv=_Default(True),
+                 positive_adv=_Default(False),
+                 policy_ent_coeff=_Default(0.0),
+                 use_softplus_entropy=_Default(False),
+                 stop_entropy_gradient=_Default(False),
+                 entropy_method=_Default('no_entropy'),
+                 minibatch_size=_Default(32),
+                 max_optimization_epochs=_Default(4)):
 
         super().__init__(env_spec=env_spec,
                          policy=policy,
@@ -75,7 +79,9 @@ class PPO(VPG):
                          policy_ent_coeff=policy_ent_coeff,
                          use_softplus_entropy=use_softplus_entropy,
                          stop_entropy_gradient=stop_entropy_gradient,
-                         entropy_method=entropy_method)
+                         entropy_method=entropy_method,
+                         minibatch_size=minibatch_size,
+                         max_optimization_epochs=max_optimization_epochs)
 
         self._lr_clip_range = lr_clip_range
 

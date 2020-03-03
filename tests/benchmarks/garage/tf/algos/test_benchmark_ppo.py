@@ -45,7 +45,9 @@ hyper_parameters = {
     'n_epochs': 400,
     'max_path_length': 100,
     'batch_size': 2048,
-    'n_trials': 10
+    'n_trials': 10,
+    'optimize_minibatch_size': 32,
+    'optimize_epochs': 4
 }
 
 
@@ -117,8 +119,8 @@ class TestBenchmarkPPO:
                 garage_pytorch_csv = run_garage_pytorch(
                     env, seed, garage_pytorch_dir)
 
-                baselines_csvs.append(baseline_csv)
-                garage_tf_csvs.append(garage_tf_csv)
+                # baselines_csvs.append(baseline_csv)
+                # garage_tf_csvs.append(garage_tf_csv)
                 garage_pytorch_csvs.append(garage_pytorch_csv)
 
             env.close()
@@ -140,7 +142,7 @@ class TestBenchmarkPPO:
                 [baselines_csvs, garage_tf_csvs, garage_pytorch_csvs],
                 seeds=seeds,
                 trials=hyper_parameters['n_trials'],
-                xs=['nupdates', 'Iteration', 'Iteration'],
+                xs=['nupdates', 'Evaluation/Iteration', 'Evaluation/Iteration'],
                 ys=[
                     'eprewmean', 'Evaluation/AverageReturn',
                     'Evaluation/AverageReturn'
@@ -185,7 +187,9 @@ def run_garage_pytorch(env, seed, log_dir):
                        discount=hyper_parameters['discount'],
                        gae_lambda=hyper_parameters['gae_lambda'],
                        center_adv=hyper_parameters['center_adv'],
-                       lr_clip_range=hyper_parameters['lr_clip_range'])
+                       lr_clip_range=hyper_parameters['lr_clip_range'],
+                       minibatch_size=hyper_parameters['optimize_minibatch_size'],
+                       optim_epochs=hyper_parameters['optimize_epochs'])
 
     # Set up logger since we are not using run_experiment
     tabular_log_file = osp.join(log_dir, 'progress.csv')
@@ -237,8 +241,8 @@ def run_garage_tf(env, seed, log_dir):
                       center_adv=hyper_parameters['center_adv'],
                       lr_clip_range=hyper_parameters['lr_clip_range'],
                       optimizer_args=dict(
-                          batch_size=None,
-                          max_epochs=1,
+                          batch_size=hyper_parameters['optimize_minibatch_size'],
+                          max_epochs=hyper_parameters['optimize_epochs'],
                           tf_optimizer_args=dict(
                               learning_rate=hyper_parameters['learning_rate']),
                           verbose=True))  # yapf: disable
@@ -292,10 +296,10 @@ def run_baselines(env, seed, log_dir):
     ppo2.learn(policy=policy,
                env=env,
                nsteps=hyper_parameters['batch_size'],
-               nminibatches=1,
+               nminibatches=hyper_parameters['batch_size'] // hyper_parameters['optimize_minibatch_size'],  # yapf: disable  # noqa: E501
                lam=hyper_parameters['gae_lambda'],
                gamma=hyper_parameters['discount'],
-               noptepochs=1,
+               noptepochs=hyper_parameters['optimize_epochs'],
                log_interval=1,
                ent_coef=0.0,
                vf_coef=0.0,
